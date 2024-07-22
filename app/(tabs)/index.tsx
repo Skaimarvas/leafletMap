@@ -7,8 +7,10 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 export default function HomeScreen() {
   const [position, setPosition] = useState({ latitude: 0, longitude: 0 });
   const locationSent = async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
+    let request = await Location.requestForegroundPermissionsAsync();
+    console.log("Request", request);
+
+    if (request?.status !== "granted") {
       Toast.show({
         type: ALERT_TYPE.WARNING,
         title: "Location",
@@ -19,6 +21,11 @@ export default function HomeScreen() {
     }
 
     let location = await Location.getCurrentPositionAsync({});
+    Toast.show({
+      type: ALERT_TYPE.SUCCESS,
+      title: "Location",
+      textBody: "Permission to access location was accepted",
+    });
     console.log("location", location);
     const { latitude, longitude } = location.coords;
     setPosition({ latitude, longitude });
@@ -37,13 +44,13 @@ export default function HomeScreen() {
         provider={PROVIDER_GOOGLE}
         camera={{
           center: {
-            latitude: 40.3,
-            longitude: 35,
+            latitude: position.latitude || 40.3,
+            longitude: position.longitude || 35,
           },
           pitch: 90,
           heading: 0,
           altitude: 500,
-          zoom: 4.8,
+          zoom: position.latitude && position.longitude ? 15.0 : 4.8,
         }}
         onUserLocationChange={(e) => {}}
         onPress={(e) => {}}
@@ -57,8 +64,8 @@ export default function HomeScreen() {
         {position.latitude !== 0 && position.longitude !== 0 && (
           <Marker
             coordinate={{
-              latitude: 40.3,
-              longitude: 35,
+              latitude: position.latitude,
+              longitude: position.longitude,
             }}
             title="Your Location"
           />
