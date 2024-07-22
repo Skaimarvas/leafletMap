@@ -1,11 +1,36 @@
-import { useRef } from "react";
+import * as Location from "expo-location";
+import { useEffect, useRef, useState } from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
-import MapView, { PROVIDER_GOOGLE } from "react-native-maps";
+import { ALERT_TYPE, Toast } from "react-native-alert-notification";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 
 export default function HomeScreen() {
+  const [position, setPosition] = useState({ latitude: 0, longitude: 0 });
+  const locationSent = async () => {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      Toast.show({
+        type: ALERT_TYPE.WARNING,
+        title: "Location",
+        textBody: "Permission to access location was denied",
+      });
+      setPosition({ latitude: 0, longitude: 0 });
+      return;
+    }
+
+    let location = await Location.getCurrentPositionAsync({});
+    console.log("location", location);
+    const { latitude, longitude } = location.coords;
+    setPosition({ latitude, longitude });
+  };
   const map = useRef<MapView>(null);
+  console.log("position", position);
+
+  useEffect(() => {
+    locationSent();
+  }, []);
   return (
-    <View style={styles.titleContainer}>
+    <View>
       <MapView
         ref={map}
         style={styles.map}
@@ -29,36 +54,28 @@ export default function HomeScreen() {
         zoomEnabled
         zoomControlEnabled
       >
-        <>
-          {/* Markers */}
-          {/* <BuildingMarkers /> */}
-        </>
+        {position.latitude !== 0 && position.longitude !== 0 && (
+          <Marker
+            coordinate={{
+              latitude: 40.3,
+              longitude: 35,
+            }}
+            title="Your Location"
+          />
+        )}
       </MapView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+  container: {
+    flex: 1,
     justifyContent: "center",
-    gap: 8,
-    width: Dimensions.get("screen").width,
-    height: Dimensions.get("screen").height,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: "absolute",
+    alignItems: "center",
   },
   map: {
-    flex: 1,
+    width: Dimensions.get("window").width,
+    height: Dimensions.get("window").height - 30,
   },
 });
